@@ -132,7 +132,6 @@ const startBotConversation = async () => {
         <q-icon name="chat" color="white" size="28px" />
       </q-avatar>
     </div>
-
     <q-card v-else class="ask-chat-container" :class="{ 'fullscreen': isFullscreen }">
       <div class="chat-header">
         <div class="chat-header-info">
@@ -437,7 +436,6 @@ const startBotConversation = async () => {
 .message-row.from-user {
   justify-content: flex-end;
 }
-
 .bubble-bot {
   background: #f5f7fa;
   color: #616e7c;
