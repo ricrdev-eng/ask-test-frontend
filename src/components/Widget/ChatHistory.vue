@@ -4,6 +4,9 @@ import { $api } from 'boot/axios'
 
 onMounted(async() => {
   await createClientId();
+
+  conversation.value = []
+  conversationMessages.value = []
 })
 const isTyping = ref(false)
 const displayReplyMessages = async (messages) => {
@@ -15,12 +18,25 @@ const displayReplyMessages = async (messages) => {
     conversationMessages.value.push(msg)
 
     await new Promise(resolve => setTimeout(resolve, 100))
+    scrollToBottom()
   }
 }
 
 const userInput = ref('')
 const carouselSlide = ref(0)
 
+const scrollAreaRef = ref(null)
+const scrollToBottom = () => {
+  if (!scrollAreaRef.value) return
+
+  const scrollTarget = scrollAreaRef.value.getScrollTarget()
+  const scrollHeight = scrollTarget.scrollHeight
+
+  scrollTarget.scrollTo({
+    top: scrollHeight,
+    behavior: "smooth"
+  })
+}
 const clientId = ref(null)
 const createClientId = async () => {
   let userId = localStorage.getItem("chat_client_id");
@@ -66,7 +82,7 @@ const isInputDisabled = computed(() => {
   if (!conversationMessages.value.length) return false
 
   const last = conversationMessages.value[conversationMessages.value.length - 1]
-  return last.sender === "BOT" && last.type === "DATE"
+  return last.sender === "BOT" && (last.type === "DATE" || last.type === "TEXT" || last.type === "FINISH" )
 })
 const conversation = ref([])
 const conversationMessages = ref([])
@@ -84,6 +100,7 @@ watch(conversationMessages, () => {
 const sendMessage = async (message, messageType) => {
   userInput.value = ''
   if (!message) return
+  isTyping.value = true
   const payload = {
     clientId: clientId.value,
     message: {
@@ -94,12 +111,15 @@ const sendMessage = async (message, messageType) => {
   }
 
   conversationMessages.value.push(payload.message)
+  scrollToBottom()
 
   const { data } = await $api.backend.post('/chat', payload)
 
   if (data.messages.length > 0) {
     await displayReplyMessages(data.messages)
   }
+  isTyping.value = false
+  scrollToBottom()
 }
 const startBotConversation = async () => {
   isTyping.value = true
@@ -117,7 +137,7 @@ const startBotConversation = async () => {
   conversation.value.push(data)
   conversationMessages.value.splice(0)
   await displayReplyMessages(data.messages)
-
+  scrollToBottom()
 }
 </script>
 
@@ -152,7 +172,7 @@ const startBotConversation = async () => {
           </q-btn>
         </div>
       </div>
-      <q-scroll-area style="height: 100%; padding: 20px">
+      <q-scroll-area ref="scrollAreaRef" style="height: 100%; padding: 20px">
         <div
           v-for="(msg, msgIndex) in conversationMessages"
           :key="msgIndex"
@@ -166,7 +186,7 @@ const startBotConversation = async () => {
             'bubble-bot': msg.sender === 'BOT',
             'bubble-user': msg.sender === 'USER' }"
           >
-            <span class="ask-pa-10 row" v-html="msg.text"/>
+            <span class="ask-pa-10 row" v-if="msg.type !== 'CAROUSEL'" v-html="msg.text"/>
             <template v-if="msg.type === 'DATE' && msgIndex === conversationMessages.length - 1">
               <q-date
                 v-model="userInput"
@@ -179,8 +199,7 @@ const startBotConversation = async () => {
               />
             </template>
             <template v-else-if="msg.type === 'CAROUSEL'">
-              <div class="carousel-wrapper">
-
+              <div class="carousel-wrapper" v-if="msg?.data?.items?.length  > 0">
                 <q-carousel
                   v-model="carouselSlide"
                   swipeable
@@ -190,38 +209,22 @@ const startBotConversation = async () => {
                   style="min-height: 200px"
                   class="carousel-card"
                 >
-                  <q-carousel-slide
-                    v-for="(room, index) in msg.data.items"
-                    :key="index"
-                    :name="index"
-                    class="column no-wrap"
-                  >
-                    <img
-                      :src="room.image"
-                      alt=""
-                      class="carousel-img"
-                    />
-
+                  <q-carousel-slide v-for="(room, index) in msg.data.items" :key="index" :name="index" class="column no-wrap">
+                    <img :src="room.image" alt="" class="carousel-img" />
                     <div class="carousel-info">
                       <div class="carousel-title">{{ room.title }}
                         <q-tooltip> {{room}}</q-tooltip>
                       </div>
                       <div class="carousel-desc">{{ room.description }}</div>
-
-                      <div
-                        v-for="(price, priceIndex) in room.prices"
-                        :key="priceIndex"
-                        class="carousel-price"
-                      >
+                      <div v-for="(price, priceIndex) in room.prices" :key="priceIndex" class="carousel-price" style="margin-top: 18px">
                         <strong>{{ price.title }} - {{ price.value }}</strong>
                         <div class="text-caption">{{ price.description }}</div>
                       </div>
                     </div>
-
                   </q-carousel-slide>
                 </q-carousel>
-
               </div>
+              <span class="ask-pa-10 row" v-else v-html="msg.data"/>
             </template>
           </q-card>
         </div>
@@ -240,6 +243,7 @@ const startBotConversation = async () => {
           placeholder="Digite sua mensagem..."
           bg-color="white"
           @keyup.enter="sendMessage(userInput, 'TEXT')"
+          @click="sendMessage(userInput, 'TEXT')"
         >
           <template v-slot:append>
             <q-btn flat dense round icon="send" color="primary" />
@@ -309,7 +313,7 @@ const startBotConversation = async () => {
 }
 .ask-chat-baloon {
   min-height: 40px;
-  padding: 8px 12px;
+  padding: 2px 8px;
   max-width: 90%;
   box-shadow: none;
   white-space: pre-line;
@@ -430,7 +434,11 @@ const startBotConversation = async () => {
   display: flex;
   width: 100%;
   margin-bottom: 10px;
-}  .message-row.from-bot {
+}
+.carousel-row {
+  margin-bottom: 10px;
+}
+.message-row.from-bot {
   justify-content: flex-start;
 }
 .message-row.from-user {
