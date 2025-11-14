@@ -1,21 +1,20 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch} from 'vue'
 import { $api } from 'boot/axios'
 
 onMounted(async() => {
   await createClientId();
 })
-
 const isTyping = ref(false)
 const displayReplyMessages = async (messages) => {
   for (const msg of messages) {
     isTyping.value = true
-    await new Promise(resolve => setTimeout(resolve, 600))
+    await new Promise(resolve => setTimeout(resolve, 200))
 
     isTyping.value = false
     conversationMessages.value.push(msg)
 
-    await new Promise(resolve => setTimeout(resolve, 300))
+    await new Promise(resolve => setTimeout(resolve, 100))
   }
 }
 
@@ -41,7 +40,7 @@ const closeConversation = async () => {
       isActive: false
     }
   }
-  const { data } = await this.$api.backend.patch('/chat', payload)
+  const { data } = await $api.backend.patch('/chat', payload)
 
   if (data.isActive) console.log('Não foi possível fechar a conversa.')
 
@@ -71,6 +70,17 @@ const isInputDisabled = computed(() => {
 })
 const conversation = ref([])
 const conversationMessages = ref([])
+watch(conversationMessages, () => {
+  if (conversationMessages.value.length === 0) return
+  const last = conversationMessages.value[conversationMessages.value.length - 1]
+  if (last.type === 'FINISH') {
+    isTyping.value = true
+    setTimeout(async () => {
+      await closeConversation()
+      isTyping.value = false
+    }, 2000)
+  }
+}, { deep: true })
 const sendMessage = async (message, messageType) => {
   userInput.value = ''
   if (!message) return
@@ -82,15 +92,11 @@ const sendMessage = async (message, messageType) => {
       sender: "USER"
     }
   }
-  const response = await fetch(`${process.env.API_URL}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
 
   conversationMessages.value.push(payload.message)
 
-  const data = await response.json()
+  const { data } = await $api.backend.post('/chat', payload)
+
   if (data.messages.length > 0) {
     await displayReplyMessages(data.messages)
   }

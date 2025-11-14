@@ -5,7 +5,7 @@ const $api = {
   backend: axios.create({
     baseURL: process.env.PROD
       ? 'https://ask-test-production.up.railway.app'
-      : 'http://localhost:3000',
+      : 'http://localhost:8080',
   })
 }
 
