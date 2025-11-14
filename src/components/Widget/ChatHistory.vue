@@ -208,7 +208,7 @@ const startBotConversation = async () => {
                         :key="priceIndex"
                         class="carousel-price"
                       >
-                        <strong>{{ price.title }} — {{ price.value }}</strong>
+                        <strong>{{ price.title }} -- {{ price.value }}</strong>
                         <div class="text-caption">{{ price.description }}</div>
                       </div>
                     </div>
