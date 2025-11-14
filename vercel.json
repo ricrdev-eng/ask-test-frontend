@@ -1,0 +1,6 @@
+{
+  "buildCommand": "quasar build",
+  "outputDirectory": "dist/spa",
+  "framework": "vite",
+  "installCommand": "npm install --legacy-peer-deps"
+}
