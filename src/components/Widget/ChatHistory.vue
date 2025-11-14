@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { $api } from 'boot/axios'
 
 onMounted(async() => {
   await createClientId();
@@ -40,13 +41,8 @@ const closeConversation = async () => {
       isActive: false
     }
   }
-  const response = await fetch("http://localhost:8080/chat", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
+  const { data } = await this.$api.backend.patch('/chat', payload)
 
-  const data = await response.json()
   if (data.isActive) console.log('Não foi possível fechar a conversa.')
 
   conversation.value = []
@@ -86,21 +82,18 @@ const sendMessage = async (message, messageType) => {
       sender: "USER"
     }
   }
-  console.log('payload', payload)
-  const response = await fetch("http://localhost:8080/chat", {
+  const response = await fetch(`${process.env.API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   })
 
   conversationMessages.value.push(payload.message)
-  console.log('conversationMessages', conversationMessages.value)
 
   const data = await response.json()
   if (data.messages.length > 0) {
     await displayReplyMessages(data.messages)
   }
-  console.log('new chat', data)
 }
 const startBotConversation = async () => {
   isTyping.value = true
@@ -108,39 +101,17 @@ const startBotConversation = async () => {
     await createClientId()
   }
 
-  const response = await fetch("http://localhost:8080/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      clientId: clientId.value
-    })
-  })
+  const payload = {
+    clientId: clientId.value
+  }
 
-  const data = await response.json()
-
-  console.log('data', data)
+  const { data } = await $api.backend.post('/chat', payload)
 
   isTyping.value = false
   conversation.value.push(data)
   conversationMessages.value.splice(0)
   await displayReplyMessages(data.messages)
 
-  // conversationMessages.value.push(...data.reply)
-
-  console.log('response', conversationMessages.value)
-
-  //
-  // clientId.value = data.clientId
-  // conversationId.value = data.conversationId
-  //
-  // // adiciona as mensagens de resposta no chat
-  // data.reply.forEach(r => {
-  //   conversationMessages.push({
-  //     sender: "bot",
-  //     type: r.type,
-  //     text: r.text
-  //   })
-  // })
 }
 </script>
 
