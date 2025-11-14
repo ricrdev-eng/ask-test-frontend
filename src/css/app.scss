@@ -1,1 +1,94 @@
 // app global css in SCSS form
+
+$colors: (
+  'primary': #FF5722,
+  'secondary': #FFFFFF,
+  'tertiary': #2B3040,
+  'text': #2B3040
+);
+$numbers: (
+  0: 0px,
+  2: 2px,
+  4: 4px,
+  6: 6px,
+  8: 8px,
+  10: 10px,
+  11: 11px,
+  12: 12px,
+  14: 14px,
+  16: 16px,
+  18: 18px,
+  20: 20px,
+  22: 22px,
+  24: 24px,
+  28: 28px,
+  30: 30px,
+  32: 32px,
+  36: 36px,
+  42: 42px,
+  48: 48px,
+  52: 52px,
+  64: 64px,
+  72: 72px,
+  82: 82px,
+  128: 128px,
+);
+
+@each $color, $hash in $colors {
+  .ask-bg-#{$color} {
+    background: $hash;
+  }
+  .ask-text-#{$color} {
+    color: $hash;
+  }
+}
+@each $number, $hash in $numbers {
+  // MARGIN
+  .ask-ma-#{$number} {
+    margin: $hash;
+  }
+  .ask-mt-#{$number} {
+    margin-top: $hash;
+  }
+  .ask-mr-#{$number} {
+    margin-right: $hash;
+  }
+  .ask-mb-#{$number} {
+    margin-bottom: $hash;
+  }
+  .ask-ml-#{$number} {
+    margin-left: $hash;
+  }
+  // PADDING
+  .ask-pa-#{$number} {
+    padding: $hash;
+  }
+  .ask-ph-#{$number} {
+    padding-left: $hash;
+    padding-right: $hash;
+  }
+  .ask-pv-#{$number} {
+    padding-top: $hash;
+    padding-bottom: $hash;
+  }
+  .ask-pt-#{$number} {
+    padding-top: $hash;
+  }
+  .ask-pr-#{$number} {
+    padding-right: $hash;
+  }
+  .ask-pb-#{$number} {
+    padding-bottom: $hash;
+  }
+  .ask-pl-#{$number} {
+    padding-left: $hash;
+  }
+  // FONTS
+  .ask-font-size-#{$number} {
+    font-size: $hash;
+  }
+  // BORDER-RADIUS
+  .ask-border-radius-#{$number} {
+    border-radius: $hash !important;
+  }
+}
