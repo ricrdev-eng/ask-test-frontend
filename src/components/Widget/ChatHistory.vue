@@ -306,8 +306,6 @@ const startBotConversation = async () => {
   min-height: 40px;
   padding: 8px 12px;
   max-width: 90%;
-  //width: auto;
-  //display: inline-block;
   box-shadow: none;
   white-space: pre-line;
 }
@@ -349,12 +347,6 @@ const startBotConversation = async () => {
 .chat-header-actions {
   display: flex;
   gap: 4px;
-}
-.chat-content {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  background-color: #f5f5f5;
 }
 .chat-input {
   padding: 16px;
@@ -433,24 +425,19 @@ const startBotConversation = async () => {
   display: flex;
   width: 100%;
   margin-bottom: 10px;
-}
-/* BOT → alinhar à esquerda */
-.message-row.from-bot {
+}  .message-row.from-bot {
   justify-content: flex-start;
 }
-/* USER → alinhar à direita */
 .message-row.from-user {
   justify-content: flex-end;
 }
 
-/* Bot: bolha cinza escura à esquerda */
 .bubble-bot {
   background: #f5f7fa;
   color: #616e7c;
   font-weight: 400;
   border-radius: 0px 12px 12px 12px;
 }
-/* User: bolha azul à direita */
 .bubble-user {
   background: #FF5722;
   color: white;
