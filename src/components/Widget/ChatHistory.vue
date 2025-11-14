@@ -243,10 +243,9 @@ const startBotConversation = async () => {
           placeholder="Digite sua mensagem..."
           bg-color="white"
           @keyup.enter="sendMessage(userInput, 'TEXT')"
-          @click="sendMessage(userInput, 'TEXT')"
         >
           <template v-slot:append>
-            <q-btn flat dense round icon="send" color="primary" />
+            <q-btn flat dense round icon="send" color="primary" @click="sendMessage(userInput, 'TEXT')"/>
           </template>
         </q-input>
       </div>
@@ -298,7 +297,6 @@ const startBotConversation = async () => {
   flex-direction: column;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-  z-index: 9999;
 }
 .ask-chat-container.fullscreen {
   right: 0;
