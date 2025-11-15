@@ -8,6 +8,15 @@ onMounted(async() => {
   conversation.value = []
   conversationMessages.value = []
 })
+
+const today = new Date().toISOString().slice(0, 10);
+const isDateAllowed = (date) => {
+  const normalized = date.replace(/\//g, '-');
+  return normalized >= today;
+};
+
+const isLoading = ref(false)
+
 const isTyping = ref(false)
 const displayReplyMessages = async (messages) => {
   for (const msg of messages) {
@@ -37,6 +46,7 @@ const scrollToBottom = () => {
     behavior: "smooth"
   })
 }
+
 const clientId = ref(null)
 const createClientId = async () => {
   let userId = localStorage.getItem("chat_client_id");
@@ -50,19 +60,27 @@ const createClientId = async () => {
 const isMinimized = ref(true)
 const isFullscreen = ref(false)
 const closeConversation = async () => {
-  const payload = {
-    conversationId: conversation.value[0].conversationId,
-    data: {
-      isActive: false
+  try {
+    isLoading.value = true
+    const payload = {
+      conversationId: conversation.value[0].conversationId,
+      data: {
+        isActive: false
+      }
     }
+    const { data } = await $api.backend.patch('/chat', payload)
+
+    if (data.isActive) console.log('Não foi possível fechar a conversa.')
+
+    conversation.value = []
+    conversationMessages.value = []
+    toggleMinimize()
+  } catch (error) {
+    console.log('Erro ao finalizar conversa', error)
+    conversation.value = []
+    conversationMessages.value = []
+    toggleMinimize()
   }
-  const { data } = await $api.backend.patch('/chat', payload)
-
-  if (data.isActive) console.log('Não foi possível fechar a conversa.')
-
-  conversation.value = []
-  conversationMessages.value = []
-  toggleMinimize()
 }
 const openConversation = async () => {
   toggleMinimize()
@@ -82,7 +100,11 @@ const isInputDisabled = computed(() => {
   if (!conversationMessages.value.length) return false
 
   const last = conversationMessages.value[conversationMessages.value.length - 1]
-  return last.sender === "BOT" && (last.type === "DATE" || last.type === "TEXT" || last.type === "FINISH" )
+  return last.sender === "USER" ||
+         last.sender === "BOT" && (last.type === "DATE" ||
+         last.type === "TEXT"
+      || last.type === "BUTTONS"
+      || last.type === "FINISH" )
 })
 const conversation = ref([])
 const conversationMessages = ref([])
@@ -123,6 +145,7 @@ const sendMessage = async (message, messageType) => {
 }
 const startBotConversation = async () => {
   isTyping.value = true
+  isLoading.value = false
   if (!clientId.value) {
     await createClientId()
   }
@@ -153,6 +176,12 @@ const startBotConversation = async () => {
       </q-avatar>
     </div>
     <q-card v-else class="ask-chat-container" :class="{ 'fullscreen': isFullscreen }">
+      <q-inner-loading
+        :showing="isLoading"
+        label="Aguarde um momento. Finalizando conversa."
+        label-class="text-primary"
+        label-style="font-size: 1.1em"
+      />
       <div class="chat-header">
         <div class="chat-header-info">
           <q-avatar round size="40px">
@@ -188,6 +217,7 @@ const startBotConversation = async () => {
           >
             <span class="ask-pa-10 row" v-if="msg.type !== 'CAROUSEL'" v-html="msg.text"/>
             <template v-if="msg.type === 'DATE' && msgIndex === conversationMessages.length - 1">
+              {{minDate}}
               <q-date
                 v-model="userInput"
                 mask="YYYY-MM-DD"
@@ -195,6 +225,7 @@ const startBotConversation = async () => {
                 minimal
                 color="primary"
                 class="q-mt-sm row"
+                :options="isDateAllowed"
                 @update:model-value="sendMessage(userInput, 'TEXT')"
               />
             </template>
@@ -225,6 +256,21 @@ const startBotConversation = async () => {
                 </q-carousel>
               </div>
               <span class="ask-pa-10 row" v-else v-html="msg.data"/>
+            </template>
+            <template v-if="msg.type === 'BUTTONS'">
+              <div class="row q-gutter-sm full-width">
+                <q-btn
+                  style="border-radius: 8px"
+                  v-for="(btn, btnIndex) in msg.data"
+                  :key="`btn-${btnIndex}`"
+                  no-caps
+                  color="primary"
+                  class="col"
+                  @click="sendMessage(btn.value, 'TEXT')"
+                >
+                  {{ btn.title }}
+                </q-btn>
+              </div>
             </template>
           </q-card>
         </div>
