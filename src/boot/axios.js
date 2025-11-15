@@ -3,7 +3,7 @@ import { boot } from 'quasar/wrappers'
 
 const $api = {
   backend: axios.create({
-    baseURL: process.env.PROD
+    baseURL: process.env.NODE_ENV === 'production'
       ? 'https://ask-test-production.up.railway.app'
       : 'http://localhost:8080',
   })

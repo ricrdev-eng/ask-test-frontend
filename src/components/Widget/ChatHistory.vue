@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch} from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { $api } from 'boot/axios'
 
 onMounted(async() => {
@@ -27,25 +27,11 @@ const displayReplyMessages = async (messages) => {
     conversationMessages.value.push(msg)
 
     await new Promise(resolve => setTimeout(resolve, 100))
-    scrollToBottom()
   }
 }
 
 const userInput = ref('')
 const carouselSlide = ref(0)
-
-const scrollAreaRef = ref(null)
-const scrollToBottom = () => {
-  if (!scrollAreaRef.value) return
-
-  const scrollTarget = scrollAreaRef.value.getScrollTarget()
-  const scrollHeight = scrollTarget.scrollHeight
-
-  scrollTarget.scrollTo({
-    top: scrollHeight,
-    behavior: "smooth"
-  })
-}
 
 const clientId = ref(null)
 const createClientId = async () => {
@@ -108,7 +94,7 @@ const isInputDisabled = computed(() => {
 })
 const conversation = ref([])
 const conversationMessages = ref([])
-watch(conversationMessages, () => {
+watch(conversationMessages, async() => {
   if (conversationMessages.value.length === 0) return
   const last = conversationMessages.value[conversationMessages.value.length - 1]
   if (last.type === 'FINISH') {
@@ -118,6 +104,8 @@ watch(conversationMessages, () => {
       isTyping.value = false
     }, 2000)
   }
+  await nextTick()
+  scrollToBottom()
 }, { deep: true })
 const sendMessage = async (message, messageType) => {
   userInput.value = ''
@@ -133,7 +121,6 @@ const sendMessage = async (message, messageType) => {
   }
 
   conversationMessages.value.push(payload.message)
-  scrollToBottom()
 
   const { data } = await $api.backend.post('/chat', payload)
 
@@ -141,7 +128,6 @@ const sendMessage = async (message, messageType) => {
     await displayReplyMessages(data.messages)
   }
   isTyping.value = false
-  scrollToBottom()
 }
 const startBotConversation = async () => {
   isTyping.value = true
@@ -160,7 +146,19 @@ const startBotConversation = async () => {
   conversation.value.push(data)
   conversationMessages.value.splice(0)
   await displayReplyMessages(data.messages)
-  scrollToBottom()
+}
+
+const scrollAreaRef = ref(null)
+const scrollToBottom = () => {
+  const area = scrollAreaRef.value
+  if (!area) return
+
+  const contentEl = area.$el.querySelector('.q-scrollarea__content')
+
+  if (contentEl) {
+    const height = contentEl.scrollHeight
+    area.setScrollPosition('vertical', height, 300)
+  }
 }
 </script>
 
@@ -242,10 +240,8 @@ const startBotConversation = async () => {
                 >
                   <q-carousel-slide v-for="(room, index) in msg.data.items" :key="index" :name="index" class="column no-wrap">
                     <img :src="room.image" alt="" class="carousel-img" />
-                    <div class="carousel-info">
-                      <div class="carousel-title">{{ room.title }}
-                        <q-tooltip> {{room}}</q-tooltip>
-                      </div>
+                    <div class="carousel-info" style="padding: 26px">
+                      <div class="carousel-title">{{ room.title }}</div>
                       <div class="carousel-desc">{{ room.description }}</div>
                       <div v-for="(price, priceIndex) in room.prices" :key="priceIndex" class="carousel-price" style="margin-top: 18px">
                         <strong>{{ price.title }} - {{ price.value }}</strong>

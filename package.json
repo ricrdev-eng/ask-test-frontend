@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "A plataforma que conecta hotéis e viajantes.",
   "productName": "Asksuite test",
-  "author": "Ricardo Junior <ricardo.junior@smarttalks.ai>",
+  "author": "Ricardo Junior <ricrdev@gmail.com>",
   "type": "module",
   "private": true,
   "scripts": {
