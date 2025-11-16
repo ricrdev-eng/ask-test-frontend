@@ -51,12 +51,6 @@ API_URL=http://localhost:8080
 npm run dev
 ```
 
-## Build para produção
-
-```bash
-npm run build
-```
-
 ---
 
 ## Vídeo no YouTube
